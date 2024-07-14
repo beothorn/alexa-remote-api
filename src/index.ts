@@ -1,4 +1,4 @@
-import Alexa, { Serial } from 'alexa-remote2';
+import Alexa, { CallbackWithErrorAndBody, SequenceNodeCommand, SequenceValue, Serial, SerialOrNameOrArray } from 'alexa-remote2';
 import express from 'express';
 import fs from 'fs';
 import os from 'os';
@@ -209,13 +209,194 @@ app.get('/names', (req, res) => {
     res.end(JSON.stringify(alexa.names));
 });
 
+type SendCommand = {
+    serialOrName: string,
+    command: SequenceNodeCommand,
+    value: SequenceValue
+};
+/**
+ * @swagger
+ * /sendCommand:
+ *   post:
+ *     summary: Send a command to a device.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serialOrName:
+ *                 type: string
+ *                 example: "Kitchen"
+ *               command:
+ *                 type: string
+ *                 example: "speak"
+ *                 enum:
+ *                   - weather
+ *                   - traffic
+ *                   - flashbriefing
+ *                   - goodmorning
+ *                   - funfact
+ *                   - joke
+ *                   - cleanup
+ *                   - singasong
+ *                   - tellstory
+ *                   - calendarToday
+ *                   - calendarTomorrow
+ *                   - calendarNext
+ *                   - textCommand
+ *                   - curatedtts
+ *                   - volume
+ *                   - deviceStop
+ *                   - deviceStopAll
+ *                   - deviceDoNotDisturb
+ *                   - deviceDoNotDisturbAll
+ *                   - speak
+ *                   - skill
+ *                   - notification
+ *                   - announcement
+ *                   - ssml
+ *                   - fireTVTurnOn
+ *                   - fireTVTurnOff
+ *                   - fireTVTurnOnOff
+ *                   - fireTVPauseVideo
+ *                   - fireTVResumeVideo
+ *                   - fireTVNavigateHome
+ *               value:
+ *                 oneOf:
+ *                   - type: string
+ *                     example: "Hello World!"
+ *                   - type: number
+ *                   - type: boolean
+ *                   - type: object
+ *                     properties:
+ *                       title:
+ *                         type: string
+ *                       text:
+ *                         type: string
+ *             required:
+ *               - serialOrName
+ *               - command
+ *               - value
+ *     responses:
+ *       200:
+ *         description: Command sent successfully.
+ *       400:
+ *         description: Bad request. Invalid input parameters.
+ *       500:
+ *         description: Internal server error.
+ */
+app.post('/sendCommand', (req, res) => {
+    const sendSequenceCommand: SendCommand = req.body;
+    alexa.sendSequenceCommand(
+        sendSequenceCommand.serialOrName,
+        sendSequenceCommand.command,
+        sendSequenceCommand.value
+    );
+    res.sendStatus(200);
+});
 
+type Speak = {
+    serialOrName: string,
+    text: string
+};
+/**
+ * @swagger
+ * /speak:
+ *   post:
+ *     summary: Sends a text for Alexa to say it.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serialOrName:
+ *                 type: string
+ *                 example: "Kitchen"
+ *               text:
+ *                 type: string
+ *                 example: "Hello!"
+ *             required:
+ *               - serialOrName
+ *               - text
+ *     responses:
+ *       200:
+ *         description: Command sent successfully.
+ *       400:
+ *         description: Bad request. Invalid input parameters.
+ *       500:
+ *         description: Internal server error.
+ */
 app.post('/speak', (req, res) => {
-    const data = req.body;
-    const device: Serial = alexa.names[data.deviceName] as unknown as Serial;
-    const serial = device.serialNumber;
-    alexa.sendSequenceCommand(serial, 'speak', data.text);
-    res.send('Data received');
+    const data: Speak = req.body;
+    alexa.sendSequenceCommand(data.serialOrName, 'speak', data.text);
+    res.sendStatus(200);
+});
+
+/**
+ * @swagger
+ * /getMusicProviders:
+ *   get:
+ *     summary: Return music providers.
+ */
+ app.get('/getMusicProviders', (req, res) => {
+    alexa.getMusicProviders((err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        return res.json(result);
+    });
+});
+
+type PlayMusicProvider = {
+    serialOrName: string,
+    providerId: string,
+    searchPhrase: string
+};
+/**
+ * @swagger
+ * /playMusicProvider:
+ *   post:
+ *     summary: Plays a music with provider.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serialOrName:
+ *                 type: string
+ *                 example: "Kitchen"
+ *               providerId:
+ *                 type: string
+ *                 example: "AMAZON_MUSIC"
+ *               searchPhrase:
+ *                 type: string
+ *                 example: "Happy birthday"
+ *             required:
+ *               - serialOrName
+ *               - providerId
+ *               - searchPhrase
+ *     responses:
+ *       200:
+ *         description: Command sent successfully.
+ *       400:
+ *         description: Bad request. Invalid input parameters.
+ *       500:
+ *         description: Internal server error.
+ */
+ app.post('/playMusicProvider', (req, res) => {
+    const data: PlayMusicProvider = req.body;
+    alexa.playMusicProvider(data.serialOrName, data.providerId, data.searchPhrase, (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        return res.json(result);
+    });
 });
 
 app.listen(expressPort, () => {

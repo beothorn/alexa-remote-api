@@ -1,12 +1,12 @@
 # alexa-remote-api
-HTTP Api wrapping alexa-remote2
+HTTP Api wrapping Apollon77 [alexa-remote2](https://github.com/Apollon77/alexa-remote)
 
-Run:
-`npm start`
+Run:  
+`npm start`  
 Api available at:
-`http://localhost:3000/api-docs`
+`http://localhost:3000/api-docs`  
 
-TODO:
+TODO:  
 
 - Configurable port  
 - Configurable proxy port  
