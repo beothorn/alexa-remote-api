@@ -46,7 +46,7 @@ alexa.init(
     {
         cookie: readFromFile(cookiePath),
         proxyOnly: true,
-        proxyOwnIp: 'localhost',
+        proxyOwnIp: 'localhost', //'192.168.2.169',
         proxyPort: alexaLoginPort,
         proxyLogLevel: 'info',
         bluetooth: true,
