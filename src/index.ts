@@ -153,8 +153,7 @@ app.get('/reconnect', (req, res) => {
  *                     type: string
  */
 app.get('/getAuthenticationDetails', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(alexa.getAuthenticationDetails()));
+    res.status(200).json(alexa.getAuthenticationDetails());
 });
 
 /**
@@ -174,9 +173,9 @@ app.get('/getAuthenticationDetails', (req, res) => {
  *                   type: boolean
  */
 app.get("/checkAuthentication", (req, res) => {
-    alexa.checkAuthentication((result, error) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({"authenticated": result}));
+    alexa.checkAuthentication((result, err) => {
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
     });
 })
 
@@ -218,11 +217,8 @@ app.get("/checkAuthentication", (req, res) => {
  */
 app.get('/getUsersMe', (req, res) => {
     alexa.getUsersMe((err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Something went wrong' });
-        }
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(result));
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
     });
 });
 
@@ -276,13 +272,8 @@ app.get('/getUsersMe', (req, res) => {
  */
 app.get('/getHousehold', (req, res) => {
     alexa.getHousehold(((err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Something went wrong' });
-        }
-        console.log(result);
-
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(result));
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
     }) as CallbackWithErrorAndBody);
 });
 
@@ -375,14 +366,162 @@ app.get('/getHousehold', (req, res) => {
  */
 app.get('/getDevices', (req, res) => {
     alexa.getDevices(((err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Something went wrong' });
-        }
-        console.log(result);
-
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(result));
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
     }) as CallbackWithErrorAndBody);
+});
+
+type GetCards = {
+    limit: number;
+    beforeCreationTime: string;
+};
+/**
+ * @swagger
+ * /getCards:
+ *   get:
+ *     summary: Retrieve a list of cards.
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         required: true
+ *         description: The number of cards to retrieve.
+ *       - in: query
+ *         name: beforeCreationTime
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *           example: "2024-01-01T00:00:00Z"
+ *         required: true
+ *         description: Only retrieve cards created before this time.
+ *     responses:
+ *       200:
+ *         description: List of cards retrieved successfully.
+ *       400:
+ *         description: Bad request. Invalid input parameters.
+ *       500:
+ *         description: Internal server error.
+ */
+app.get('/getCards', (req, res) => {
+    const { limit, beforeCreationTime } = req.query as unknown as GetCards;
+    
+    if (!limit || !beforeCreationTime) {
+        res.status(400).send('Bad request. Invalid input parameters.');
+        return;
+    }
+
+    // Assuming getCards is a function that retrieves the cards
+    alexa.getCards(limit, beforeCreationTime, (error, body) => {
+        if (error) {
+            res.status(500).send('Internal server error.');
+            return;
+        }
+        res.status(200).json(body);
+    });
+});
+
+type GetMedia = {
+    serialOrName: string;
+};
+/**
+ * @swagger
+ * /getMedia:
+ *   get:
+ *     summary: Information about the media currently executing on the device.
+ *     parameters:
+ *       - in: query
+ *         name: serialOrName
+ *         example: "Kitchen"
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The name or serial number of the device.
+ *     responses:
+ *       200:
+ *         description: Information about the media currently executing on the device.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 clientId:
+ *                   type: string
+ *                   nullable: true
+ *                 contentId:
+ *                   type: string
+ *                   nullable: true
+ *                 contentType:
+ *                   type: string
+ *                   nullable: true
+ *                 currentState:
+ *                   type: string
+ *                 imageURL:
+ *                   type: string
+ *                   nullable: true
+ *                 isDisliked:
+ *                   type: boolean
+ *                 isLiked:
+ *                   type: boolean
+ *                 looping:
+ *                   type: boolean
+ *                 mediaOwnerCustomerId:
+ *                   type: string
+ *                   nullable: true
+ *                 muted:
+ *                   type: boolean
+ *                 programId:
+ *                   type: string
+ *                   nullable: true
+ *                 progressSeconds:
+ *                   type: integer
+ *                 providerId:
+ *                   type: string
+ *                   nullable: true
+ *                 queue:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                   nullable: true
+ *                 queueId:
+ *                   type: string
+ *                   nullable: true
+ *                 queueSize:
+ *                   type: integer
+ *                 radioStationId:
+ *                   type: string
+ *                   nullable: true
+ *                 radioVariety:
+ *                   type: integer
+ *                 referenceId:
+ *                   type: string
+ *                   nullable: true
+ *                 service:
+ *                   type: string
+ *                   nullable: true
+ *                 shuffling:
+ *                   type: boolean
+ *                 timeLastShuffled:
+ *                   type: integer
+ *                 volume:
+ *                   type: integer
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+app.get('/getMedia', (req, res) => {
+    const { serialOrName } = req.query as unknown as GetMedia;
+    alexa.getMedia(serialOrName, (err, result) => {
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
+    });
 });
 
 /**
