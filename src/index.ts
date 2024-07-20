@@ -130,6 +130,35 @@ app.get('/reconnect', (req, res) => {
 
 /**
  * @swagger
+ * /getAuthenticationDetails:
+ *   get:
+ *     summary: Return authentication details.
+ *     responses:
+ *       200:
+ *         description: Authentication details.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                   authenticated:
+ *                     type: boolean
+ *                   canAccessPrimeMusicContent:
+ *                     type: boolean
+ *                   customerEmail:
+ *                     type: string
+ *                   customerId:
+ *                     type: string
+ *                   customerName:
+ *                     type: string
+ */
+app.get('/getAuthenticationDetails', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(alexa.getAuthenticationDetails()));
+});
+
+/**
+ * @swagger
  * /getSmarthomeDevices:
  *   get:
  *     summary: Return smart home devices.
