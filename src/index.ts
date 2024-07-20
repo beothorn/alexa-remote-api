@@ -1,10 +1,23 @@
-import Alexa, { CallbackWithErrorAndBody, SequenceNodeCommand, SequenceValue, Serial, SerialOrNameOrArray } from 'alexa-remote2';
+import Alexa, { CallbackWithError, CallbackWithErrorAndBody, SequenceNodeCommand, SequenceValue, Serial, SerialOrNameOrArray } from 'alexa-remote2';
 import express from 'express';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+
+const args = process.argv.slice(2);
+const configFilePath = args[0];
+
+let config = {
+    proxyOwnIp: 'localhost',
+    proxyPort: 3000,
+    expressPort: 3001
+}
+
+if(configFilePath) {
+    config = readFromFile(configFilePath);
+}
 
 const options = {
   definition: {
@@ -32,60 +45,74 @@ if (!fs.existsSync(alexaRemotePath)) {
 
 console.log(`Folder created at: ${alexaRemotePath}`);
 
-const expressPort = 3000;
-const alexaLoginPort = 3001;
-
+const expressPort = config.expressPort;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-let alexa = new Alexa();
+let alexa:Alexa;
 
-alexa.init(
-    {
-        cookie: readFromFile(cookiePath),
-        proxyOnly: true,
-        proxyOwnIp: 'localhost', //'192.168.2.169',
-        proxyPort: alexaLoginPort,
-        proxyLogLevel: 'info',
-        bluetooth: true,
-        logger: console.log,
-        macDms: readFromFile(macDmsPath),
-    }, 
-    function (err) {
+function startAlexa(cookie: any, errorHandler: CallbackWithError) {
+    alexa = new Alexa();
+    alexa.init(
+        {
+            cookie: cookie,
+            proxyOnly: true,
+            proxyOwnIp: config.proxyOwnIp, //'192.168.2.169',
+            proxyPort: config.proxyPort,
+            proxyLogLevel: 'info',
+            bluetooth: true,
+            logger: console.log,
+            macDms: readFromFile(macDmsPath),
+        }, errorHandler
+    );
+    alexa.on('cookie', (cookie: any, _csrf:any, macDms:any) => {
+        console.log("Received cookie.");
+        console.log(cookie);
+        console.log("Received macDms.");
+        console.log(macDms);
+        writeToFile(cookiePath, cookie);
+        writeToFile(macDmsPath, macDms);
+    });
+}
+
+const cookieFromFile:any = readFromFile(cookiePath);
+if(cookieFromFile){
+    startAlexa(cookieFromFile, ((err) => {
         if (err) {
             console.log(err);
         } else {
             console.log('Alexa connection was reinitialized');
         }
-    }
-);
-
-alexa.on('cookie', (cookie, csrf, macDms) => {
-    writeToFile(cookiePath, cookie);
-    writeToFile(macDmsPath, macDms);
-});
+    }) as CallbackWithError);
+}
 
 app.get('/', (req, res) => {
     if (!alexa) {
-        res.send('Use /reconnect to start');
+        res.send('Use /reconnect to start and /api-docs to see endpoints. Please change your authentication to use an OTP instead of SMS or email.');
     }
 });
 
-app.get('/reconnect', (req, res) => {
-    alexa = new Alexa();
+/**
+ * @swagger
+ * /clearSavedFiles:
+ *   delete:
+ *     summary: Deletes cookies and other persisted files.
+ */
+app.delete('/clearCookies', (req, res) => {
+    fs.rmdirSync(alexaRemotePath);
+    fs.mkdirSync(alexaRemotePath);
+});
 
-    alexa.init({
-        cookie: readFromFile(cookiePath),
-        proxyOnly: true,
-        proxyOwnIp: 'localhost',
-        proxyPort: alexaLoginPort,
-        proxyLogLevel: 'info',
-        bluetooth: true,
-        logger: console.log,
-        macDms: readFromFile(macDmsPath),
-    }, function (err) {
+/**
+ * @swagger
+ * /reconnect:
+ *   get:
+ *     summary: Redirects to login on amazon via proxy.
+ */
+app.get('/reconnect', (req, res) => {
+    startAlexa({}, ((err) => {
         if (err) {
             console.log(err);
             const url = extractUrl(err.message);
@@ -98,12 +125,39 @@ app.get('/reconnect', (req, res) => {
         } else {
             res.send('alexa connection was reinitialized');
         }
-    });
-    alexa.on('cookie', (cookie, csrf, macDms) => {
-        writeToFile(cookiePath, cookie);
-        writeToFile(macDmsPath, macDms);
-    });
+    }) as CallbackWithError);
+});
 
+/**
+ * @swagger
+ * /getSmarthomeDevices:
+ *   get:
+ *     summary: Return smart home devices.
+ *     responses:
+ *       200:
+ *         description: A list of smart home devices.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 devices:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     additionalProperties:
+ *                       type: object
+ */
+app.get('/getSmarthomeDevices', (req, res) => {
+    alexa.getSmarthomeDevices(((err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        console.log(result);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    }) as CallbackWithErrorAndBody);
 });
 
 /**
@@ -415,10 +469,10 @@ function readFromFile(path: string) {
         return JSON.parse(data);
     } catch (err: any) {
         if (err.code === 'ENOENT') {
-            return {};
+            return null;
         } else {
             console.error(`Error reading file ${path}`, err);
-            return {};
+            return null;
         }
     }
 }
