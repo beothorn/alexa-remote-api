@@ -228,6 +228,165 @@ app.get('/getUsersMe', (req, res) => {
 
 /**
  * @swagger
+ * /getHousehold:
+ *   get:
+ *     summary: Retrieve household information.
+ *     responses:
+ *       200:
+ *         description: Household information retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 __type:
+ *                   type: string
+ *                   description: The type of the household model.
+ *                 accounts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       email:
+ *                         type: string
+ *                         description: The email of the account.
+ *                       eulaAcceptance:
+ *                         type: boolean
+ *                         description: Indicates if the EULA was accepted.
+ *                       firstName:
+ *                         type: string
+ *                         description: The first name of the account holder.
+ *                       fullName:
+ *                         type: string
+ *                         description: The full name of the account holder.
+ *                       id:
+ *                         type: string
+ *                         description: The ID of the account.
+ *                       pendingUserPin:
+ *                         type: string
+ *                         nullable: true
+ *                         description: The pending user PIN, if any.
+ *                       role:
+ *                         type: string
+ *                         description: The role of the account holder in the household.
+ *                 id:
+ *                   type: string
+ *                   nullable: true
+ *                   description: The ID of the household.
+ */
+app.get('/getHousehold', (req, res) => {
+    alexa.getHousehold(((err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        console.log(result);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    }) as CallbackWithErrorAndBody);
+});
+
+
+/**
+ * @swagger
+ * /getDevices:
+ *   get:
+ *     summary: Retrieve a list of devices.
+ *     responses:
+ *       200:
+ *         description: A list of devices.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 devices:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       accountName:
+ *                         type: string
+ *                       appDeviceList:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             deviceAccountId:
+ *                               type: string
+ *                             deviceType:
+ *                               type: string
+ *                             serialNumber:
+ *                               type: string
+ *                       associatedUnitIds:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       capabilities:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       charging:
+ *                         type: string
+ *                         nullable: true
+ *                       clusterMembers:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       deviceAccountId:
+ *                         type: string
+ *                       deviceFamily:
+ *                         type: string
+ *                       deviceOwnerCustomerId:
+ *                         type: string
+ *                       deviceType:
+ *                         type: string
+ *                       deviceTypeFriendlyName:
+ *                         type: string
+ *                         nullable: true
+ *                       essid:
+ *                         type: string
+ *                         nullable: true
+ *                       language:
+ *                         type: string
+ *                         nullable: true
+ *                       macAddress:
+ *                         type: string
+ *                         nullable: true
+ *                       online:
+ *                         type: boolean
+ *                       parentClusters:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       postalCode:
+ *                         type: string
+ *                         nullable: true
+ *                       registrationId:
+ *                         type: string
+ *                         nullable: true
+ *                       remainingBatteryLevel:
+ *                         type: number
+ *                         nullable: true
+ *                       serialNumber:
+ *                         type: string
+ *                       softwareVersion:
+ *                         type: string
+ */
+app.get('/getDevices', (req, res) => {
+    alexa.getDevices(((err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        console.log(result);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    }) as CallbackWithErrorAndBody);
+});
+
+/**
+ * @swagger
  * /getSmarthomeDevices:
  *   get:
  *     summary: Return smart home devices.
