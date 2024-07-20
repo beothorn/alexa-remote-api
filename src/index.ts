@@ -159,6 +159,75 @@ app.get('/getAuthenticationDetails', (req, res) => {
 
 /**
  * @swagger
+ * /checkAuthentication:
+ *   get:
+ *     summary: Return json with authencication info.
+ *     responses:
+ *       200:
+ *         description: A JSON with the authentication state.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 authenticated:
+ *                   type: boolean
+ */
+app.get("/checkAuthentication", (req, res) => {
+    alexa.checkAuthentication((result, error) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({"authenticated": result}));
+    });
+})
+
+/**
+ * @swagger
+ * /getUsersMe:
+ *   get:
+ *     summary: Lost of information about the user.
+ *     responses:
+ *       200:
+ *         description: Lost of information about the user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 countryOfResidence:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 eulaAcceptance:
+ *                   type: boolean
+ *                 features:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 fullName:
+ *                   type: string
+ *                 hasActiveDopplers:
+ *                   type: boolean
+ *                 id:
+ *                   type: string
+ *                 marketPlaceDomainName:
+ *                   type: string
+ *                 marketPlaceId:
+ *                   type: string
+ *                 marketPlaceLocale:
+ *                   type: string
+ */
+app.get('/getUsersMe', (req, res) => {
+    alexa.getUsersMe((err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Something went wrong' });
+        }
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    });
+});
+
+/**
+ * @swagger
  * /getSmarthomeDevices:
  *   get:
  *     summary: Return smart home devices.
@@ -424,6 +493,20 @@ app.post('/speak', (req, res) => {
  * /getMusicProviders:
  *   get:
  *     summary: Return music providers.
+ *     responses:
+ *       200:
+ *         description: A list of smart home devices.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     additionalProperties:
+ *                       type: object
  */
  app.get('/getMusicProviders', (req, res) => {
     alexa.getMusicProviders((err, result) => {
