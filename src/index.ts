@@ -11,8 +11,8 @@ const configFilePath = args[0];
 
 let config = {
     proxyOwnIp: 'localhost',
-    proxyPort: 3000,
-    expressPort: 3001
+    proxyPort: 3366,
+    expressPort: 3377
 }
 
 if(configFilePath) {
