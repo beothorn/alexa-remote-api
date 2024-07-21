@@ -524,6 +524,39 @@ app.get('/getMedia', (req, res) => {
     });
 });
 
+type GetPlayerInfo = {
+    serialOrName: string;
+};
+/**
+ * @swagger
+ * /getPlayerInfo:
+ *   get:
+ *     summary: Retrieve something
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+app.get("/getPlayerInfo", (req, res) => {
+    const { serialOrName } = req.query as unknown as GetMedia;
+    alexa.getMedia(serialOrName, (err, result) => {
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
+    });
+});
+
 /**
  * @swagger
  * /getSmarthomeDevices:
