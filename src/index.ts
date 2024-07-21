@@ -16,7 +16,7 @@ let config = {
 }
 
 if(configFilePath) {
-    config = readFromFile(configFilePath);
+    config = readFromFileAbsolutePath(configFilePath);
 }
 
 const options = {
