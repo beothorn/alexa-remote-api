@@ -1046,9 +1046,9 @@ function extractUrl(errorMessage: string) {
     return match ? match[0] : "no match";
 }
 
-function readFromFile(path: string) {
+function readFromFileAbsolutePath(path: string) {
     try {
-        const data = fs.readFileSync(`${alexaRemotePath}${separator}${path}`, 'utf8');
+        const data = fs.readFileSync(path, 'utf8');
         return JSON.parse(data);
     } catch (err: any) {
         if (err.code === 'ENOENT') {
@@ -1058,6 +1058,10 @@ function readFromFile(path: string) {
             return null;
         }
     }
+}
+
+function readFromFile(path: string) {
+    return readFromFileAbsolutePath(`${alexaRemotePath}${separator}${path}`);
 }
 
 function writeToFile(path:string, data: any) {
