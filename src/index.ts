@@ -531,7 +531,15 @@ type GetPlayerInfo = {
  * @swagger
  * /getPlayerInfo:
  *   get:
- *     summary: Retrieve something
+ *     summary: Retrieve media player information
+ *     parameters:
+ *       - in: query
+ *         name: serialOrName
+ *         example: "Kitchen"
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The name or serial number of the device.
  *     responses:
  *       200:
  *         description: Successful response
@@ -539,6 +547,73 @@ type GetPlayerInfo = {
  *           application/json:
  *             schema:
  *               type: object
+ *               properties:
+ *                 clientId:
+ *                   type: string
+ *                   nullable: true
+ *                 contentId:
+ *                   type: string
+ *                   nullable: true
+ *                 contentType:
+ *                   type: string
+ *                   nullable: true
+ *                 currentState:
+ *                   type: string
+ *                   example: "IDLE"
+ *                 imageURL:
+ *                   type: string
+ *                   nullable: true
+ *                 isDisliked:
+ *                   type: boolean
+ *                 isLiked:
+ *                   type: boolean
+ *                 looping:
+ *                   type: boolean
+ *                 mediaOwnerCustomerId:
+ *                   type: string
+ *                   nullable: true
+ *                 muted:
+ *                   type: boolean
+ *                 programId:
+ *                   type: string
+ *                   nullable: true
+ *                 progressSeconds:
+ *                   type: integer
+ *                   example: 0
+ *                 providerId:
+ *                   type: string
+ *                   nullable: true
+ *                 queue:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                   nullable: true
+ *                 queueId:
+ *                   type: string
+ *                   nullable: true
+ *                 queueSize:
+ *                   type: integer
+ *                   example: 0
+ *                 radioStationId:
+ *                   type: string
+ *                   nullable: true
+ *                 radioVariety:
+ *                   type: integer
+ *                   example: 0
+ *                 referenceId:
+ *                   type: string
+ *                   nullable: true
+ *                 service:
+ *                   type: string
+ *                   nullable: true
+ *                 shuffling:
+ *                   type: boolean
+ *                 timeLastShuffled:
+ *                   type: integer
+ *                   example: 0
+ *                 volume:
+ *                   type: integer
+ *                   example: 43
  *       500:
  *         description: Internal server error
  *         content:
@@ -556,6 +631,71 @@ app.get("/getPlayerInfo", (req, res) => {
         res.status(200).json(result);
     });
 });
+
+/**
+ * @swagger
+ * /getLists:
+ *   get:
+ *     summary: Retrieve something
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   archived:
+ *                     type: boolean
+ *                   createdDate:
+ *                     type: integer
+ *                   customerId:
+ *                     type: string
+ *                   defaultList:
+ *                     type: boolean
+ *                   itemId:
+ *                     type: string
+ *                   listIds:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   listReorderVersion:
+ *                     type: string
+ *                     nullable: true
+ *                   name:
+ *                     type: string
+ *                     nullable: true
+ *                   nbestItems:
+ *                     type: string
+ *                     nullable: true
+ *                   originalAudioId:
+ *                     type: string
+ *                     nullable: true
+ *                   type:
+ *                     type: string
+ *                   updatedDate:
+ *                     type: integer
+ *                   version:
+ *                     type: integer
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+app.get("/getLists", (req, res) => {
+    alexa.getLists((err, result) => {
+        if (err) return res.status(500).json({ error: 'Something went wrong' });
+        res.status(200).json(result);
+    });
+});
+
 
 /**
  * @swagger
